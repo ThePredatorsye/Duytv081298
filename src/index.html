@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport"
+    content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="full-screen" content="yes" />
+  <meta name="screen-orientation" content="portrait" />
+  <script src="https://connect.facebook.net/en_US/fbinstant.7.0.js"></script>
+  <title>PixiJS</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+    }
+
+    @font-face {
+      font-family: 'GROBOLD';
+      src: url('assets/fonts/GROBOLD.ttf');
+    }
+
+    canvas {
+      position: absolute;
+      padding: 0;
+      margin: auto;
+      display: block;
+    }
+
+    #text_level {
+      position: absolute;
+      left: 0px;
+      right: 0px;
+      margin: 0px auto;
+      text-align: center;
+      z-index: 1;
+      color: white;
+      font-family: 'GROBOLD';
+    }
+  </style>
+</head>
+
+<body>
+
+  <canvas id="myCanvas" width="320px" height="480px"></canvas>
+  <div id="text_level"></div>
+</body>
+
+</html>
