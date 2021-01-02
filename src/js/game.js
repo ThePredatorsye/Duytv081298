@@ -25,6 +25,10 @@ export default class Game {
         this.levelContainer = new PIXI.Container();
         this.settingContainer = new PIXI.Container();
 
+        this.containerMain = new PIXI.Container();
+
+        this.containerWin = new PIXI.Container();
+        this.createContainer()
         this.listcheckl2 = [];
         this.hack = false;
     }
@@ -52,17 +56,28 @@ export default class Game {
             this.player = this.setPlayer(this.main.player)
             this.map = this.player.map.slice()
         }
-        this.drawTextLevel()
+        this.setZindex()
 
+        this.drawTextLevel()
         this.setLCBottle(this.player.bottle);
         this.setMap(this.bottleBase.indexRow);
+        this.drawSetting()
+        if (this.player.level == 1) this.addHand()
+        else if (this.player.level == 2) this.checkLevel2()
 
+        console.log(this.app.stage.children);
 
+    }
+    createContainer() {
         this.diaphragm = new PIXI.Graphics();
         this.diaphragm.name = 'diaphragm'
         this.diaphragm.beginFill(0x000000);
         this.diaphragm.drawRect(0, 0, this.app.screen.width, this.app.screen.height);
         this.diaphragm.alpha = 0
+
+
+        this.containerMain.name = 'main container'
+        this.app.stage.addChild(this.containerMain);
 
         this.confettiContainer.name = 'confetti Container'
         this.app.stage.addChild(this.confettiContainer)
@@ -75,12 +90,15 @@ export default class Game {
         this.settingContainer.name = 'setting container'
         this.app.stage.addChild(this.settingContainer)
 
-        this.drawSetting()
-        if (this.player.level == 1) this.addHand()
-        else if (this.player.level == 2) this.checkLevel2()
-
-        console.log(this.app.stage.children);
-
+        this.containerWin.name = 'win container'
+        this.app.stage.addChild(this.containerWin);
+    }
+    setZindex() {
+        this.containerMain.zIndex = 1
+        this.confettiContainer.zIndex = 3
+        this.diaphragm.zIndex = 2
+        this.settingContainer.zIndex = 4
+        this.containerWin.zIndex = 5
     }
     setLCBottle(quantity) {
         var WIDTH = this.app.screen.width
@@ -144,7 +162,7 @@ export default class Game {
         };
 
 
-        const ball = PIXI.Sprite.from(this.loader.resources.ball_1.texture);
+        const ball = PIXI.Sprite.from(this.loader.resources.balls.textures["ball_1.png"]);
         const scale_ball = this.ballW / ball.getBounds().width
         ball.scale.set(scale_ball, scale_ball);
 
@@ -228,9 +246,6 @@ export default class Game {
     }
 
     setMap(indexRow) {
-        this.containerMain = new PIXI.Container();
-        this.containerMain.name = 'main container'
-        this.app.stage.addChild(this.containerMain);
         this.listBottle = [];
         for (let i = 0; i < this.map.length; i++) {
             const listColor = this.map[i];
@@ -250,7 +265,7 @@ export default class Game {
             for (let j = 0; j < listColor.length; j++) {
                 const color = listColor[j];
                 if (color > 0) {
-                    const ball = this.getBall(color)
+                    const ball = PIXI.Sprite.from(this.loader.resources.balls.textures["ball_" + color + ".png"]);
                     ball.scale.set(this.ballBase.scale, this.ballBase.scale);
                     ball.position.set(this.ballBase.startX[i], i >= indexRow.numR1 ? this.ballBase.startY2[j] : this.ballBase.startY1[j]);
 
@@ -262,36 +277,6 @@ export default class Game {
             this.containerMain.addChild(bottle);
         }
     }
-    getBall(color) {
-        switch (color) {
-            case 1:
-                return PIXI.Sprite.from(this.loader.resources.ball_1.texture);
-            case 2:
-                return PIXI.Sprite.from(this.loader.resources.ball_2.texture);
-            case 3:
-                return PIXI.Sprite.from(this.loader.resources.ball_3.texture);
-            case 4:
-                return PIXI.Sprite.from(this.loader.resources.ball_4.texture);
-            case 5:
-                return PIXI.Sprite.from(this.loader.resources.ball_5.texture);
-            case 6:
-                return PIXI.Sprite.from(this.loader.resources.ball_6.texture);
-            case 7:
-                return PIXI.Sprite.from(this.loader.resources.ball_7.texture);
-            case 8:
-                return PIXI.Sprite.from(this.loader.resources.ball_8.texture);
-            case 9:
-                return PIXI.Sprite.from(this.loader.resources.ball_9.texture);
-            case 10:
-                return PIXI.Sprite.from(this.loader.resources.ball_10.texture);
-            case 11:
-                return PIXI.Sprite.from(this.loader.resources.ball_11.texture);
-            case 12:
-                return PIXI.Sprite.from(this.loader.resources.ball_12.texture);
-        }
-
-    }
-
     click_Bottle(param) {
         const indexChoose = param
         if (indexChoose != null) {
@@ -354,13 +339,18 @@ export default class Game {
     }
     upBallChoose() {
         var indexChoose = this.listBottleA[this.listBottleA.length - 1].index;
+        this.listBottle[indexChoose].status = false;
         var ball = this.listBottle[indexChoose].listBall[0];
         var temp = this.bottleBase.indexRow.numR1
         var y = indexChoose < temp ? this.bottleBase.startY[0] - this.ballBase.height * 1 : this.bottleBase.startY[1] - this.ballBase.height * 1;
-        gsap.to(ball, { y: y, duration: TIMEMOVEUP, ease: "none" });
+        gsap.to(ball, { y: y, duration: TIMEMOVEUP, ease: "none" })
+            .eventCallback("onComplete", () => {
+                this.listBottle[indexChoose].status = true;
+            });;
     }
     downBallChoose() {
         var indexChoose = this.listBottleA[this.listBottleA.length - 1].index;
+        this.listBottle[indexChoose].status = false;
         this.listBottleA.pop();
         var ball = this.listBottle[indexChoose].listBall[0];
         var indexBall = 4 - this.listBottle[indexChoose].listBall.length;
@@ -372,6 +362,8 @@ export default class Game {
             .eventCallback("onComplete", () => {
                 this.leapBall(ball)
                 this.PlaySound('ball_fall_1')
+                setTimeout(() => { this.listBottle[indexChoose].status = true; }, 250);
+
             });
     }
     leapBall(ball) {
@@ -394,7 +386,6 @@ export default class Game {
         let oldChoose = this.listBottleA[this.listBottleA.length - 1];
         let newChoose = this.listBottleB[this.listBottleB.length - 1];
 
-        this.listBottle[oldChoose.index].status = false;
         this.listBottle[newChoose.index].status = false;
 
         var num = oldChoose.num >= newChoose.num ? newChoose.num : oldChoose.num
@@ -403,10 +394,10 @@ export default class Game {
         var temp = this.bottleBase.indexRow.numR1
 
         var x0 = this.listBottle[oldChoose.index].listBall[0].x
-        var y0 = oldChoose.index < temp ? this.bottleBase.startY[0] - this.ballBase.height * 1 : this.bottleBase.startY[1] - this.ballBase.height * 1;
+        var y0 = oldChoose.index < temp ? this.bottleBase.startY[0] - this.ballBase.height : this.bottleBase.startY[1] - this.ballBase.height;
 
         var x1 = this.ballBase.startX[newChoose.index]
-        var y1 = newChoose.index < temp ? this.bottleBase.startY[0] - this.ballBase.height * 1 : this.bottleBase.startY[1] - this.ballBase.height * 1;
+        var y1 = newChoose.index < temp ? this.bottleBase.startY[0] - this.ballBase.height : this.bottleBase.startY[1] - this.ballBase.height;
 
 
         var distance = this.getDistance({ x: x0, y: y0 }, { x: x1, y: y1 });
@@ -419,17 +410,19 @@ export default class Game {
         var target = this.listBottle[oldChoose.index].listBall.shift();
         this.listBottle[newChoose.index].listBall.unshift(target);
 
+        if (y1 > y0) { y0 -= this.ballBase.height * 0.3 }
+        else if (y1 < y0) { y1 -= this.ballBase.height * 0.3 }
         gsap.timeline()
+        
             .to(ball, { x: x1, y: y1, duration: timeRight, ease: "none" })
             .to(ball, { y: y2, duration: TIMEMOVEDOWN, ease: "none" })
             .eventCallback("onComplete", () => {
-                // this.PlaySound("ball_fall_" + num)
                 if (num == 1) {
                     this.leapBall(ball)
                     this.moveEnd(newChoose.index, x1, y1)
                 }
             });
-        setTimeout(() => { this.PlaySound("ball_fall_" + num) }, timeRight + TIMEMOVEDOWN / 2);
+        setTimeout(() => { this.PlaySound("ball_fall_" + num) }, TIMEMOVEUP + timeRight + TIMEMOVEDOWN / 2);
 
         complete++
         i++
@@ -450,16 +443,12 @@ export default class Game {
                         if (complete == num) {
                             this.leapBall(ball)
                             setTimeout(() => { this.moveEnd(newChoose.index, x1, y1) }, 125);
-
-
                         }
                     });
                 i++
                 if (i == num) clearInterval(myInterval);
-
             }
             test()
-
         }
         this.convertMap();
     }
@@ -484,7 +473,7 @@ export default class Game {
     moveEnd(index, x, y) {
         var bottleComplete = checkCompleteItem(this.map[index])
         if (bottleComplete) {
-
+            if (this.main.vibration) navigator.vibrate(100);
             this.PlaySound("bottleComplete")
             this.setConfetti(x + this.bottleBase.width / 3, y + this.bottleBase.height, this.app.screen.width * 0.2)
             if (this.checkWin() && this.complete) {
@@ -559,9 +548,6 @@ export default class Game {
     }
     drawWin() {
         this.PlaySound('win')
-        this.containerWin = new PIXI.Container();
-        this.containerWin.name = 'win container'
-        this.app.stage.addChild(this.containerWin);
 
         this.diaphragm.alpha = 0.7
 
@@ -572,8 +558,8 @@ export default class Game {
         this.setConfettiWin('right', false)
         setTimeout(() => { this.setConfettiWin('right', true) }, 600);
 
-        const btn_next = PIXI.Sprite.from(this.loader.resources.btn_next.texture);
-        btn_next.scale.set((this.app.screen.width *0.36 ) / btn_next.width, (this.app.screen.width *0.35) / btn_next.width);
+        const btn_next = PIXI.Sprite.from(this.loader.resources.buttons.textures["btn_next.png"]);
+        btn_next.scale.set((this.app.screen.width * 0.36) / btn_next.width, (this.app.screen.width * 0.35) / btn_next.width);
         btn_next.position.set(-btn_next.width, this.app.screen.height * 0.55);
         this.containerWin.addChild(btn_next)
         btn_next.interactive = true;
@@ -594,9 +580,8 @@ export default class Game {
             }
             this.pixiRemoveAllChildren(this.containerWin)
             this.diaphragm.alpha = 0
-            this.app.stage.removeChild(this.diaphragm)
             this.complete = true;
-            this.main.nextLevel()
+            this.main.nextLevelAds()
         });
     }
     setCheerBelow() {
@@ -677,17 +662,17 @@ export default class Game {
 
     addBottle() {
         if (this.player.bottle <= 15) {
-            this.map.splice(Math.floor(this.map.length / 2), 0, [0, 0, 0, 0]);
+            this.map.push([0, 0, 0, 0]);
             numBottleAdd++
             this.player.bottle += 1
             this.listBottle = [];
-            this.pixiRemoveAllChildren(this.containerMain)
+            this.removeAllChildMainContainer()
             var preMap = this.map.slice()
             this.init(preMap);
         }
     }
     restartLevel() {
-        this.pixiRemoveAllChildren(this.containerMain)
+        this.removeAllChildMainContainer()
         this.player.bottle -= numBottleAdd
         numBottleAdd = 0
         this.clearDataLevel();
@@ -712,13 +697,13 @@ export default class Game {
         this.listBottleA.pop()
         this.listBottleB.pop()
         this.listBottle = [];
-        this.pixiRemoveAllChildren(this.containerMain)
+        this.removeAllChildMainContainer()
         var preMap = this.map.slice()
         this.init(preMap);
     }
     nextLevel() {
         this.containerMain.interactiveChildren = true;
-        this.pixiRemoveAllChildren(this.containerMain)
+        this.removeAllChildMainContainer()
     }
     clearDataLevel() {
         this.pixiRemoveAllChildren(this.confettiContainer)
@@ -729,9 +714,15 @@ export default class Game {
     }
 
     drawTextLevel() {
-        this.pixiRemoveAllChildren(this.levelContainer)
+        while (this.levelContainer.children[0]) {
+            this.levelContainer.removeChild(this.levelContainer.children[0]);
+        }
+        this.app.stage.removeChild(this.levelContainer)
+
         this.levelContainer = new PIXI.Container();
         this.levelContainer.name = 'level container'
+        this.app.stage.addChild(this.levelContainer)
+
         var levelCr = this.player.level + ''
         var percent = levelCr.length == 1 ? 1.5 : levelCr.length == 2 ? 1.7 : 2
         var btn_ads = this.main.buttonContainer.getChildByName('btn_ads')
@@ -886,12 +877,16 @@ export default class Game {
         while (container.children[0]) {
             container.removeChild(container.children[0]);
         }
-        this.app.stage.removeChild(container)
-
+        // this.app.stage.removeChild(container)
+    }
+    removeAllChildMainContainer() {
+        while (this.containerMain.children[0]) {
+            this.containerMain.removeChild(this.containerMain.children[0]);
+        }
     }
 
     addHand() {
-        var hand_tut = PIXI.Sprite.from(this.loader.resources.hand_tut.texture);
+        var hand_tut = PIXI.Sprite.from(this.loader.resources.buttons.textures["hand_tut.png"]);
         hand_tut.name = 'hand_tut'
         const scale_hand_tut = (this.app.screen.width / 8.5) / hand_tut.width
         hand_tut.scale.set(scale_hand_tut, scale_hand_tut);
@@ -1042,6 +1037,10 @@ export default class Game {
             _this.listcheckl2[4].alpha = 0
             _this.listcheckl2[5].alpha = 0
         }
+    }
+    checkExist(parent, name_children) {
+        const child = parent.getChildByName(name_children)
+        if (child) parent.removeChild(child)
     }
 
 
