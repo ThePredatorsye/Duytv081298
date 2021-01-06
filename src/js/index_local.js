@@ -180,13 +180,13 @@ class Main {
     this.buttonContainer.name = 'button container'
     this.app.stage.addChild(this.buttonContainer);
 
-    const btn_setting = PIXI.Sprite.from(this.loader.resources.btn_setting.texture);
+    const btn_setting = PIXI.Sprite.from(this.loader.resources.buttons.textures["btn_setting.png"]);
     btn_setting.name = 'btn_setting'
     const scale_btn_setting = (this.app.screen.width / 8) / btn_setting.getBounds().width
     btn_setting.scale.set(scale_btn_setting, scale_btn_setting);
     btn_setting.position.set(this.app.screen.width / 8, btn_setting.height / 2.5);
 
-    const btn_ads = PIXI.Sprite.from(this.loader.resources.btn_ads.texture);
+    const btn_ads = PIXI.Sprite.from(this.loader.resources.buttons.textures["btn_ads.png"]);
     btn_ads.name = 'btn_ads'
     btn_ads.scale.set(scale_btn_setting, scale_btn_setting);
     btn_ads.position.set(this.app.screen.width - this.app.screen.width / 8 - btn_ads.width, btn_ads.height / 2.5);
@@ -201,29 +201,29 @@ class Main {
     separator_line.position.set(0, btn_setting.height * 1.5);
 
 
-    const btn_retry = PIXI.Sprite.from(this.loader.resources.btn_retry.texture);
+    const btn_retry = PIXI.Sprite.from(this.loader.resources.buttons.textures["btn_retry.png"]);
     btn_retry.name = 'btn_retry'
     btn_retry.scale.set(scale_btn_setting, scale_btn_setting);
     btn_retry.position.set(this.app.screen.width / 8, (this.app.screen.height * 9 / 10) - btn_retry.height * 1.5);
 
-    const btn_back = PIXI.Sprite.from(this.loader.resources.btn_back.texture);
+    const btn_back = PIXI.Sprite.from(this.loader.resources.buttons.textures["btn_back.png"]);
     btn_back.name = 'btn_back'
     btn_back.scale.set(scale_btn_setting, scale_btn_setting);
     btn_back.position.set(this.app.screen.width - this.app.screen.width / 8 - btn_back.width, btn_retry.y);
 
-    const btn_idea = PIXI.Sprite.from(this.loader.resources.btn_idea.texture);
+    const btn_idea = PIXI.Sprite.from(this.loader.resources.buttons.textures["btn_idea.png"]);
     btn_idea.name = 'btn_idea'
     btn_idea.scale.set(scale_btn_setting, scale_btn_setting);
     btn_idea.position.set((this.app.screen.width - btn_idea.width) / 2, btn_retry.y);
 
 
-    const btn_next = PIXI.Sprite.from(this.loader.resources.btn_next.texture);
+    const btn_next = PIXI.Sprite.from(this.loader.resources.buttons.textures["btn_next.png"]);
     btn_next.name = 'btn_next'
     const scale_btn_next = (this.app.screen.width / 6) / btn_next.width
     btn_next.scale.set(scale_btn_next, scale_btn_next);
     btn_next.position.set(this.app.screen.width / 2 + btn_next.getBounds().width, this.app.screen.height - btn_next.getBounds().height * 1.5);
 
-    const btn_Back_temp = PIXI.Sprite.from(this.loader.resources.btn_next.texture);
+    const btn_Back_temp = PIXI.Sprite.from(this.loader.resources.buttons.textures["btn_next.png"]);
     btn_Back_temp.name = 'btn_Back_temp'
     btn_Back_temp.scale.set(scale_btn_next, scale_btn_next);
     btn_Back_temp.scale.x *= -1;

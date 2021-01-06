@@ -11,14 +11,25 @@ module.exports = merge(config, {
     maxAssetSize: 900000
   },
   optimization: {
+    minimize: true,
     minimizer: [
       new TerserPlugin({
         terserOptions: {
-          output: {
-            comments: false
-          }
-        }
-      })
-    ]
-  }
+          format: {
+            comments: false,
+            
+          },
+        //   compress: { 
+        //     pure_funcs: [
+        //         'console.log', 
+        //         'console.info', 
+        //         'console.debug', 
+        //         'console.warn'
+        //     ] 
+        // } 
+        },
+        extractComments: false,
+      }),
+    ],
+  },
 })

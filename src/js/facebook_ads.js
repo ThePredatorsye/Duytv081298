@@ -1,54 +1,54 @@
 
-const INTERSTITIAL_PLACEMENT_ID = '1304584393307296_1331550857277316';
-const REWARDED_PLACEMENT_ID = '1304584393307296_1331541930611542';
-const REWARDED_BANNER_ID = '1304584393307296_1331571300608605';
+const INTERSTITIAL_PLACEMENT_ID = '335423665035241_383656783545262';
+const REWARDED_PLACEMENT_ID = '335423665035241_383656893545251';
+const REWARDED_BANNER_ID = ' 335423665035241_383656280211979';
 
-var watchedInterstitials = 0;
-var watchedRewardedVideos = 0;
-var preloadedRewardedVideo = null;
+var nextLevelVideo = null;
 var videoAddbottle = null;
-var videoHack = null;
-var preloadeddBanner = null;
+var videoBack = null;
 export default class Ads {
     constructor(main) {
         this.main = main
         this.addBottle = false;
-        this.addHack = false;
-        this.loadRewardedVideoAsync();
+        this.addBack = false;
+        this.loadInterstitialAdAsync();
         this.loadAdAddBottle();
-        this.loadAdHack();
+        this.loadAdBack();
         this.loadBannerAdAsync()
     }
+    //load ads next level
     loadInterstitialAdAsync() {
         FBInstant.getInterstitialAdAsync(
             INTERSTITIAL_PLACEMENT_ID, // Your Ad Placement Id
-        ).then((interstitial) => {
-            // Load the Ad asynchronously
-            videoAddbottle = interstitial;
-            return videoAddbottle.loadAsync();
-        }).then(() => {
-            console.log('Interstitial preloaded');
-        }).catch((err) => {
-            console.log('Interstitial failed to preload: ' + err.message);
-        });
-    }
-    loadRewardedVideoAsync() {
-        FBInstant.getRewardedVideoAsync(
-            REWARDED_PLACEMENT_ID, // Your Ad Placement Id
         ).then((rewarded) => {
-            // Load the Ad asynchronously
-            preloadedRewardedVideo = rewarded;
-            return preloadedRewardedVideo.loadAsync();
+            nextLevelVideo = rewarded;
+            return nextLevelVideo.loadAsync();
         }).then(() => {
-            console.log('Rewarded video preloaded');
+            console.log('Interstitial 1 preloaded')
         }).catch((err) => {
-            console.log('Rewarded video failed to preload:' + err.message);
+            console.error('Interstitial 1 failed to preload: ' + err.message);
         });
     }
 
+    showInterstitial() {
+        nextLevelVideo.showAsync()
+            .then(() => {
+                console.log('Interstitial ad finished successfully');
+                this.main.nextLevel()
+                this.loadInterstitialAdAsync()
+            }).catch((e) => {
+                console.error(e);
+                console.error(e.message);
+                if (e.code == 'RATE_LIMITED') {
+                    this.main.nextLevel()
+                    this.loadInterstitialAdAsync()
+                }
+            });
+    }
+    // load ads banner
     loadBannerAdAsync() {
         FBInstant.loadBannerAdAsync(
-            REWARDED_BANNER_ID, 
+            REWARDED_BANNER_ID,
         ).then(function () {
             console.log('loadBannerAdAsync resolved.');
         }).catch(function (err) {
@@ -57,28 +57,38 @@ export default class Ads {
         );
     }
 
-    showInterstitial(type) {
+    showRewardedVideo(type) {
         if (type == 'addBottle') {
             if (this.addBottle) {
                 videoAddbottle.showAsync()
                     .then(() => {
-                        console.log('Interstitial ad finished successfully');
+                        console.log('Rewarded video watched successfully');
                         this.addBottle = false
                         this.main.addBottle();
-
+                        this.loadAdAddBottle()
                     })
                     .catch((e) => {
-                        console.log(e.message);
+                        if (e.code == 'USER_INPUT') this.loadAdAddBottle()
+                        console.error(e);
+                        console.error(e.message);
                     });
             }
-        } else if ("hack") {
-            if (this.addHack) {
-                videoHack.showAsync()
+        } else if ("back") {
+            if (this.addBack) {
+                videoBack.showAsync()
                     .then(() => {
-                        console.log('Interstitial ad finished successfully');
+                        console.log('Rewarded video watched successfully');
+                        this.main.plus = false;
+                        this.addBack = false;
+                        this.main.back = 5
+                        this.main.removePlus();
+                        this.main.drawTextBack();
+                        this.loadAdBack();
                     })
                     .catch((e) => {
-                        console.log(e.message);
+                        if (e.code == 'USER_INPUT') this.loadAdBack()
+                        console.error(e);
+                        console.error(e.message);
                     });
             }
         }
@@ -86,45 +96,37 @@ export default class Ads {
 
     }
 
-    showRewardedVideo() {
-        preloadedRewardedVideo.showAsync()
-            .then(() => {
-                console.log('Rewarded video watched successfully');
-            }).catch(function (e) {
-                console.log(e.message);
-            });
-    }
     loadAdAddBottle() {
         var type = 'addBottle'
-        FBInstant.getInterstitialAdAsync(INTERSTITIAL_PLACEMENT_ID)
+        FBInstant.getRewardedVideoAsync(REWARDED_PLACEMENT_ID)
             .then((interstitial) => {
                 videoAddbottle = interstitial;
                 return videoAddbottle.loadAsync();
             }).then(() => {
                 this.filterType(type, true)
-                console.log('Interstitial 1 preloaded')
+                console.log('Rewarded video preloaded');
             }).catch((err) => {
                 this.filterType(type, false)
-                console.error('Interstitial 1 failed to preload: ' + err.message);
+                console.error('Rewarded video failed to preload:' + err.message);
                 setTimeout(() => { this.handleAdsNoFill(videoAddbottle, 2, type); }, 30 * 1000);
             });
 
 
     }
 
-    loadAdHack() {
-        var type = 'hack'
-        FBInstant.getInterstitialAdAsync(INTERSTITIAL_PLACEMENT_ID)
+    loadAdBack() {
+        var type = 'back'
+        FBInstant.getRewardedVideoAsync(REWARDED_PLACEMENT_ID)
             .then((interstitial) => {
-                videoHack = interstitial;
-                return videoHack.loadAsync();
+                videoBack = interstitial;
+                return videoBack.loadAsync();
             }).then(() => {
                 this.filterType(type, true)
-                console.log('Interstitial 1 preloaded')
+                console.log('Rewarded video preloaded');
             }).catch((err) => {
                 this.filterType(type, false)
-                console.error('Interstitial 1 failed to preload: ' + err.message);
-                setTimeout(() => { this.handleAdsNoFill(videoHack, 2, type); }, 30 * 1000);
+                console.error('Rewarded video failed to preload:' + err.message);
+                setTimeout(() => { this.handleAdsNoFill(videoBack, 2, type); }, 30 * 1000);
             });
     }
 
@@ -134,18 +136,18 @@ export default class Ads {
         else {
             adInstance.loadAsync().then(() => {
                 this.filterType(type, true)
-                console.log('Interstitial preloaded')
+                console.log('Rewarded video preloaded');
             }).catch((err) => {
                 this.filterType(type, false)
-                console.error('Interstitial failed to preload: ' + err.message);
+                console.error('Rewarded video failed to preload:' + err.message);
                 setTimeout(() => { handleAdsNoFill(adInstance, attemptNumber + 1); }, 30 * 1000);
             });
         }
     }
     filterType(type, status) {
         switch (type) {
-            case 'hack':
-                this.addHack = status;
+            case 'back':
+                this.addBack = status;
                 break;
             case 'addBottle':
                 this.addBottle = status;
