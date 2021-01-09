@@ -30,7 +30,6 @@ export default class Game {
         this.containerWin = new PIXI.Container();
         this.createContainer()
         this.listcheckl2 = [];
-        this.hack = false;
     }
 
 
@@ -65,7 +64,7 @@ export default class Game {
         if (this.player.level == 1) this.addHand()
         else if (this.player.level == 2) this.checkLevel2()
 
-        console.log(this.app.stage.children);
+        // console.log(this.app.stage.children);
 
     }
     createContainer() {
@@ -111,18 +110,18 @@ export default class Game {
             this.bottleW = WIDTH / 7;
             this.ballW = WIDTH / 9.5;
             if (indexRow.row == 1) startY.push(HEIGHT / 3)
-            else startY = [HEIGHT / 6.2, HEIGHT / 2]
+            else startY = [HEIGHT / 5, HEIGHT / 1.9]
         }
         else if (indexRow.numR1 <= 7) {
             this.bottleW = WIDTH / 7.5;
             this.ballW = WIDTH / 10;
 
             if (indexRow.row == 1) startY.push(HEIGHT / 3)
-            else startY = [HEIGHT / 6.2, HEIGHT / 2]
+            else startY = [HEIGHT / 5, HEIGHT / 1.9]
         }
         else if (indexRow.numR1 <= 8) {
             this.bottleW = WIDTH / 9;
-            this.ballW = WIDTH / 11.5;
+            this.ballW = WIDTH / 12;
 
             if (indexRow.row == 1) startY.push(HEIGHT / 3)
             else startY = [HEIGHT / 5, HEIGHT / 2]
@@ -292,20 +291,31 @@ export default class Game {
                 var oldChoose = this.listBottleA[this.listBottleA.length - 1].index
                 var newColor = this.getBallEmpty(indexChoose);
                 if (indexChoose != oldChoose && newColor.num > 0) {
-                    if (this.listBottle[indexChoose].status == true) {
-                        var oldColor = this.listBottleA[this.listBottleA.length - 1]
-                        if (newColor.color == oldColor.color || newColor.num == 4) {
-                            this.listBottleB.push(newColor);
-                            this.moveBallChoose();
-                        } else if (this.hack == true) {
-                            this.listBottleB.push(newColor);
-                            this.moveBallChoose(true);
-                        } else {
-                            this.downBallChoose();
-                        }
+                    // if (this.listBottle[indexChoose].status == true) {
+                    var oldColor = this.listBottleA[this.listBottleA.length - 1]
+                    if (newColor.color == oldColor.color || newColor.num == 4) {
+                        this.listBottleB.push(newColor);
+                        this.moveBallChoose();
+                    } else {
+                        this.downBallChoose();
+                        if (this.listBottle[indexChoose].status == true) {
+                            var choose = this.getBallChoose(indexChoose);
+                            this.listBottleA.push(choose);
+                            this.upBallChoose();
+                        };
+                        // console.log(this.listBottleA.length);
+                        // }
                     }
+                } else if (indexChoose == oldChoose) {
+                    this.downBallChoose();
                 } else {
                     this.downBallChoose();
+                    if (this.listBottle[indexChoose].status == true) {
+                        var choose = this.getBallChoose(indexChoose);
+                        this.listBottleA.push(choose);
+                        this.upBallChoose();
+                    };
+                    // console.log(this.listBottleA.length);
                 }
             }
         }
@@ -360,32 +370,39 @@ export default class Game {
 
         gsap.to(ball, { y: y, duration: TIMEMOVEDOWN, ease: "none" })
             .eventCallback("onComplete", () => {
-                this.leapBall(ball)
+                this.leapBall(ball, indexChoose)
                 this.PlaySound('ball_fall_1')
-                setTimeout(() => { this.listBottle[indexChoose].status = true; }, 250);
-
             });
     }
-    leapBall(ball) {
+    leapBall(ball, indexChoose, x1, y1, bottleComplete) {
         var y = ball.y
         gsap.timeline()
-            .to(ball, { y: y - this.bottleBase.height / 20, duration: 0.1, ease: "none" })
+            .to(ball, { y: y - this.bottleBase.height / 25, duration: 0.1, ease: "none" })
             .to(ball, { y: y, duration: 0.1, ease: "none" })
+            .eventCallback("onComplete", () => {
+                this.listBottle[indexChoose].status = true;
+                if (bottleComplete && this.checkWin() && this.complete) {
+                    this.containerMain.interactiveChildren = false
+                    this.main.buttonContainer.interactiveChildren = false
+                    this.complete = false;
+                    setTimeout(() => { this.drawWin(); console.log('win');}, 750);
+                }
+            });
+        if (bottleComplete) {
+            if (this.main.vibration) navigator.vibrate(100);
+            this.PlaySound("bottleComplete")
+            this.setConfetti(x1 + this.bottleBase.width / 3, y1 + this.bottleBase.height, this.app.screen.width * 0.2)
+        }
     }
 
-    moveBallChoose(useHack) {
-        if (this.hack && useHack == true) {
-            this.hack = false
-            this.main.closeAlert();
-        } else if (this.hack && useHack == null) {
-            this.hack = true;
-            this.main.closeAlertDontUse()
-        }
+    moveBallChoose() {
 
+        var max_index = this.containerMain.children.length - 1
         var complete = 0;
         let oldChoose = this.listBottleA[this.listBottleA.length - 1];
         let newChoose = this.listBottleB[this.listBottleB.length - 1];
 
+        this.listBottle[oldChoose.index].status = false;
         this.listBottle[newChoose.index].status = false;
 
         var num = oldChoose.num >= newChoose.num ? newChoose.num : oldChoose.num
@@ -409,20 +426,15 @@ export default class Game {
         var ball = this.listBottle[oldChoose.index].listBall[0];
         var target = this.listBottle[oldChoose.index].listBall.shift();
         this.listBottle[newChoose.index].listBall.unshift(target);
-
+        var child2 = this.containerMain.getChildAt(max_index - i)
+        this.containerMain.swapChildren(ball, child2)
         if (y1 > y0) { y0 -= this.ballBase.height * 0.3 }
         else if (y1 < y0) { y1 -= this.ballBase.height * 0.3 }
         gsap.timeline()
-        
             .to(ball, { x: x1, y: y1, duration: timeRight, ease: "none" })
             .to(ball, { y: y2, duration: TIMEMOVEDOWN, ease: "none" })
-            .eventCallback("onComplete", () => {
-                if (num == 1) {
-                    this.leapBall(ball)
-                    this.moveEnd(newChoose.index, x1, y1)
-                }
-            });
-        setTimeout(() => { this.PlaySound("ball_fall_" + num) }, TIMEMOVEUP + timeRight + TIMEMOVEDOWN / 2);
+            .eventCallback("onComplete", () => { if (num == 1) this.leapBall(ball, newChoose.index, x1, y1, bottleComplete) });
+        setTimeout(() => { this.PlaySound("ball_fall_" + num) }, timeRight + TIMEMOVEDOWN / 2);
 
         complete++
         i++
@@ -434,16 +446,16 @@ export default class Game {
                 target = this.listBottle[oldChoose.index].listBall.shift();
                 this.listBottle[newChoose.index].listBall.unshift(target);
 
+                var child2 = this.containerMain.getChildAt(max_index - i)
+                this.containerMain.swapChildren(ball, child2)
+
                 gsap.timeline()
                     .to(ball, { y: y0, duration: TIMEMOVEUP, ease: "none" })
                     .to(ball, { x: x1, y: y1, duration: timeRight, ease: "none" })
                     .to(ball, { y: y2, duration: TIMEMOVEDOWN, ease: "none" })
                     .eventCallback("onComplete", () => {
                         complete++
-                        if (complete == num) {
-                            this.leapBall(ball)
-                            setTimeout(() => { this.moveEnd(newChoose.index, x1, y1) }, 125);
-                        }
+                        if (complete == num) { this.leapBall(ball, newChoose.index, x1, y1, bottleComplete) }
                     });
                 i++
                 if (i == num) clearInterval(myInterval);
@@ -451,6 +463,8 @@ export default class Game {
             test()
         }
         this.convertMap();
+
+        var bottleComplete = checkCompleteItem(this.map[newChoose.index])
     }
 
     convertMap() {
@@ -468,20 +482,6 @@ export default class Game {
         this.map.splice(newChoose.index, 1, newColorArr);
 
         this.listBottle[oldChoose.index].status = true;
-        this.listBottle[newChoose.index].status = true;
-    }
-    moveEnd(index, x, y) {
-        var bottleComplete = checkCompleteItem(this.map[index])
-        if (bottleComplete) {
-            if (this.main.vibration) navigator.vibrate(100);
-            this.PlaySound("bottleComplete")
-            this.setConfetti(x + this.bottleBase.width / 3, y + this.bottleBase.height, this.app.screen.width * 0.2)
-            if (this.checkWin() && this.complete) {
-                this.containerMain.interactiveChildren = false
-                this.complete = false;
-                setTimeout(() => { this.drawWin(); console.log('win'); }, 1100);
-            }
-        }
     }
     getDistance(p1, p2) {
         var a = p1.x - p2.x;
@@ -548,9 +548,7 @@ export default class Game {
     }
     drawWin() {
         this.PlaySound('win')
-
         this.diaphragm.alpha = 0.7
-
 
         this.setCheerBelow()
         this.setFireworkBelow()
@@ -560,7 +558,7 @@ export default class Game {
 
         const btn_next = PIXI.Sprite.from(this.loader.resources.buttons.textures["btn_next.png"]);
         btn_next.scale.set((this.app.screen.width * 0.36) / btn_next.width, (this.app.screen.width * 0.35) / btn_next.width);
-        btn_next.position.set(-btn_next.width, this.app.screen.height * 0.55);
+        btn_next.position.set(-btn_next.width, this.app.screen.height * 0.57);
         this.containerWin.addChild(btn_next)
         btn_next.interactive = true;
 
@@ -575,13 +573,13 @@ export default class Game {
                     this.app.stage.removeChild(tick)
                 }
                 this.listcheckl2 = null
-                var text = document.getElementById("text_level")
-                text.remove()
+                var text_level = this.app.stage.getChildByName("text_level");
+                if (text_level) this.app.stage.removeChild(text_level)
             }
             this.pixiRemoveAllChildren(this.containerWin)
             this.diaphragm.alpha = 0
-            this.complete = true;
-            this.main.nextLevelAds()
+            if (this.main.adSupport) this.main.nextLevelAds()
+            else this.main.nextLevel()
         });
     }
     setCheerBelow() {
@@ -615,7 +613,7 @@ export default class Game {
 
         const scale = Math.min((this.app.screen.width * 1.2) / win.width, (this.app.screen.height) / win.height,);
         win.scale.set(scale, scale);
-        win.position.set((this.app.screen.width - win.width) / 2, -win.height * 0.2);
+        win.position.set((this.app.screen.width - win.width) / 2, -win.height * 0.15);
 
         this.containerWin.addChild(win);
 
@@ -657,6 +655,7 @@ export default class Game {
             if (isWin) win++;
         }
         if (win == this.player.bottle && complete == true) return true;
+        // if (win == this.player.bottle) return true;
         else return false;
     }
 
@@ -666,13 +665,13 @@ export default class Game {
             numBottleAdd++
             this.player.bottle += 1
             this.listBottle = [];
-            this.removeAllChildMainContainer()
+            this.pixiRemoveAllChildren(this.containerMain)
             var preMap = this.map.slice()
             this.init(preMap);
         }
     }
     restartLevel() {
-        this.removeAllChildMainContainer()
+        this.pixiRemoveAllChildren(this.containerMain)
         this.player.bottle -= numBottleAdd
         numBottleAdd = 0
         this.clearDataLevel();
@@ -697,13 +696,14 @@ export default class Game {
         this.listBottleA.pop()
         this.listBottleB.pop()
         this.listBottle = [];
-        this.removeAllChildMainContainer()
+        this.pixiRemoveAllChildren(this.containerMain)
         var preMap = this.map.slice()
         this.init(preMap);
     }
     nextLevel() {
         this.containerMain.interactiveChildren = true;
-        this.removeAllChildMainContainer()
+        this.pixiRemoveAllChildren(this.containerMain);
+        this.clearDataLevel();
     }
     clearDataLevel() {
         this.pixiRemoveAllChildren(this.confettiContainer)
@@ -825,7 +825,7 @@ export default class Game {
 
         btn_close.on('pointerdown', () => {
             this.closeSetting()
-            console.log('click btn_close');
+            // console.log('click btn_close');
         });
 
         btn_device_vibrate.on('pointerdown', () => {
@@ -838,7 +838,7 @@ export default class Game {
                 vibration_off.alpha = 0
                 vibration_on.alpha = 1
             }
-            console.log('click btn_device_vibrate');
+            // console.log('click btn_device_vibrate');
         });
         btn_device_sound.on('pointerdown', () => {
             if (this.main.sound) {
@@ -852,19 +852,19 @@ export default class Game {
                 sound_off.alpha = 0
                 sound_on.alpha = 1
             }
-            console.log('click btn_device_sound');
+            // console.log('click btn_device_sound');
         });
     }
 
     openSetting() {
-        console.log('click open');
+        // console.log('click open');
         this.diaphragm.alpha = 0.7
         gsap.timeline()
             .to(this.settingContainer, { y: 0, duration: 0.55, ease: "back.out(2)" })
     }
 
     closeSetting() {
-        console.log('đã click');
+        // console.log('đã click');
         this.diaphragm.alpha = 0
         gsap.timeline()
             .to(this.settingContainer, { y: - this.settingContainer.height * 2, duration: 0.5, ease: "back.in(2)" })
@@ -879,11 +879,6 @@ export default class Game {
         }
         // this.app.stage.removeChild(container)
     }
-    removeAllChildMainContainer() {
-        while (this.containerMain.children[0]) {
-            this.containerMain.removeChild(this.containerMain.children[0]);
-        }
-    }
 
     addHand() {
         var hand_tut = PIXI.Sprite.from(this.loader.resources.buttons.textures["hand_tut.png"]);
@@ -895,30 +890,28 @@ export default class Game {
         this.app.stage.addChild(hand_tut)
         var y = hand_tut.y
         this.tutorialL1 = gsap.to(hand_tut, { y: y + this.bottleBase.height * 0.25, duration: 0.35, ease: "none", repeat: -1, yoyo: true })
-
-
-        var div_text = document.getElementById('text_level')
-        div_text.style.width = this.app.screen.width * 2 / 3 + 'px';
-        div_text.style.top = this.app.screen.height * 0.75 + 'px';
-
-        var text = document.createElement("p");
-        text.setAttribute("id", "text_p");
-        const node = document.createTextNode("Click left tube to pick up");
-        text.appendChild(node);
-        div_text.appendChild(text);
-
-        var fontSize = (this.app.screen.width * 2 / 3) / 13 + 'px';
-        text.style.fontSize = fontSize;
-        text.style.color = "#BAA1AB";
+        this.addTextInput('Click left tube to pick up', this.app.screen.height * 0.75)
+    }
+    addTextInput(text, y) {
+        var text_level = this.app.stage.getChildByName("text_level");
+        if (text_level) this.app.stage.removeChild(text_level)
+        var fontSize = (this.app.screen.width * 2 / 3) / 12.5 + 'px';
+        const style = new PIXI.TextStyle({ align: "center", fontFamily: "GROBOLD", fontWeight: "lighter", fontSize: fontSize, trim: true, fill: "#baa1ab" });
+        var text1 = new PIXI.Text(text, style);
+        text1.name = 'text_level'
+        text1.position.set((this.app.screen.width - text1.width) * 0.5, y);
+        this.app.stage.addChild(text1)
+        text1.texture.baseTexture.scaleMode = PIXI.SCALE_MODES.NEAREST;
     }
 
     eventLevel_1(param) {
+        var text_level = this.app.stage.getChildByName("text_level");
         var hand_tut = this.app.stage.getChildByName("hand_tut");
         var y = hand_tut.y
         const indexChoose = param
-        console.log(indexChoose);
+        // console.log(indexChoose);
         var bottle_0 = this.containerMain.getChildByName("bottle_0");
-        var bottle_1 = this.containerMain.getChildByName("bottle_1");
+        // var bottle_1 = this.containerMain.getChildByName("bottle_1");
         if (indexChoose == 0 && bottle_0.interactive == true) {
             bottle_0.interactive = false;
             var choose = this.getBallChoose(indexChoose);
@@ -937,8 +930,7 @@ export default class Game {
             this.tutorialL1.kill();
             this.tutorialL1 = null;
             this.app.stage.removeChild(hand_tut)
-            var text = document.getElementById("text_p")
-            text.remove()
+            if (text_level) this.app.stage.removeChild(text_level)
 
         }
     }
@@ -960,19 +952,7 @@ export default class Game {
             this.listcheckl2.push(correct)
             this.app.stage.addChild(incorrect, correct)
         }
-        var div_text = document.getElementById('text_level')
-        div_text.style.width = this.app.screen.width * 2 / 3 + 'px';
-        div_text.style.top = this.app.screen.height * 0.65 + 'px';
-
-        var text = document.createElement("p");
-        text.setAttribute("id", "text_p");
-        const node = document.createTextNode("Only put the ball on the other same color ball");
-        text.appendChild(node);
-        div_text.appendChild(text);
-
-        var fontSize = (this.app.screen.width * 2 / 3) / 15 + 'px';
-        text.style.fontSize = fontSize;
-        text.style.color = "#BAA1AB";
+        this.addTextInput('Only put the ball on the other\nsame color ball', this.app.screen.height * 0.65)
 
     }
 
@@ -1038,17 +1018,6 @@ export default class Game {
             _this.listcheckl2[5].alpha = 0
         }
     }
-    checkExist(parent, name_children) {
-        const child = parent.getChildByName(name_children)
-        if (child) parent.removeChild(child)
-    }
-
-
-
-
-
-
-
 }
 
 function checkCompleteItem(arr) {

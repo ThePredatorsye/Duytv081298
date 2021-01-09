@@ -5,6 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport"
     content="initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, width=device-width, user-scalable=no, minimal-ui">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src gap://ready file://* *; style-src 'self' http://* https://* 'unsafe-inline'; script-src 'self' http://* https://* 'unsafe-inline' 'unsafe-eval'">
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="full-screen" content="yes" />
   <meta name="screen-orientation" content="portrait" />
@@ -16,27 +18,11 @@
       padding: 0;
     }
 
-    @font-face {
-      font-family: 'GROBOLD';
-      src: url('assets/fonts/GROBOLD.ttf');
-    }
-
     canvas {
       position: absolute;
       padding: 0;
       margin: auto;
       display: block;
-    }
-
-    #text_level {
-      position: absolute;
-      left: 0px;
-      right: 0px;
-      margin: 0px auto;
-      text-align: center;
-      z-index: 1;
-      color: white;
-      font-family: 'GROBOLD';
     }
   </style>
 </head>
@@ -44,7 +30,6 @@
 <body>
 
   <canvas id="myCanvas" width="320px" height="480px"></canvas>
-  <div id="text_level"></div>
 </body>
 
 </html>
